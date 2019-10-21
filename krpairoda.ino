@@ -17,26 +17,27 @@ Servo propeller;
 #define CMPS11_ADDRESS 0x60  // Address of CMPS11 shifted right one bit for arduino wire library
 #define ANGLE_8  1           // Register to read 8bit angle from
 
-#define enA 4
-#define in1 2
-#define in2 3
+#define enA 3
+#define in1 12
+#define in2 13
 #define enB 5
 #define in3 4
 #define in4 7
 byte motorSpeedA = 0;
 byte motorSpeedB = 0;
 
-#define UVpin A0
+#define UVpin A4
 
-#define button 10
+
+#define button 11
 
 //int Pingpin[8]=[A1,A2,A3,A4,A5,8,10,11];
 //Pin ping (asumsi 6 ) 
 #define pingFL A2 // Front Left
 #define pingFM A1 // Front Middle 
 #define pingFR A3 // Front Right 
-#define pingL A4 // Left
-#define pingR A5 // Right 
+#define pingL A0 // Left
+#define pingR 10 // Right 
 #define pingB 8  // Back 
 NewPing FL(pingFL,pingFL,2000);
 NewPing FM(pingFM,pingFM,2000);
@@ -54,8 +55,21 @@ float datapingB;
 
 // Random Var
 int val;
+int buttonState;
+
+// Var getUV()
+int sensorValue = 0;  // Variabel Penyimpan Input UVTron
+int sensorYES = 400;  // Batas atas 
+int sensorNO = 10;  // Batas bawah 
+int adaApi = 0; // 0 = tidak ada api, 1 = ada api,(0,1) = ada bayangan
+int numRead = 0; // 
+int Max_numRead = 10; //
+
+// Var getAMG()
+bool status_amg;
+
 // LIST FUNGSI 
-float getCompass() ;
+/*float getCompass() ;
 /*
  *  Output langsung nilai compass
  */
@@ -82,12 +96,13 @@ void getAMG();
 /*
  * Output nya langsung di array float pixels 
  */
-int getUV();
+ 
+void getUV();
 /*
  * Output True or False , Algoritma fungsinya masih belom 100% jalan, nanti diganti .
  */
 
-void getPing();
+//void getPing();
 /*
  * Update 6 sensor ultra ,disimpen di variabel
  */
@@ -101,41 +116,62 @@ void getPing()
   datapingL=L.ping_cm();
   datapingR=R.ping_cm();
   datapingB=B.ping_cm();
+  Serial.println("START PING");
+  Serial.print("Front left : ");
+  Serial.println(datapingFL);
+  Serial.print("Front mid : ");
+  Serial.println(datapingFM);
+  Serial.print("Front right : ");
+  Serial.println(datapingFR);
+    Serial.print("Left : ");
+  Serial.println(datapingL);
+    Serial.print("right : ");
+  Serial.println(datapingR);
+    Serial.print("Back : ");
+  Serial.println(datapingB);
+  
 }
-int getUV()
+
+void getUV()
 {
-  Serial.println("UV");
-  for (int i = 0; i < 2; i++) {
-    val = analogRead(UVpin); 
-    if ( val >=400) {
-      Serial.println("Ada api");
-      return true;
+   // read the value from the sensor:
+  sensorValue = analogRead(UVpin);
+  if (sensorValue > sensorYES) {
+      adaApi = 1;
+      numRead = Max_numRead;
     }
-    else
-    {
-      Serial.println("Tidak ada api");
-      return false;
+  else if (sensorValue < sensorNO) {
+      if (numRead > 0) {
+        numRead = numRead - 1;
+      } 
+      else {
+        adaApi = 0;
+      }
     }
-  }
+  //Serial.println(sensorValue);
+  Serial.print("adaApi : ");
+  Serial.println(adaApi);
+  delay(10);
+  
 }
+
 void getAMG()
 {
-    int x;
-    amg.readPixels(pixels);
-   Serial.print("[");
+  status_amg = amg.begin();
+    if (!status_amg) {
+        Serial.println("Could not find a valid AMG88xx sensor, check wiring!");}
+  amg.readPixels(pixels);
+
+    Serial.print("[");
     for(int i=1; i<=AMG88xx_PIXEL_ARRAY_SIZE; i++){
-      x=pixels[i-1];
-      if ( x>40) {
-      Serial.print("X");} else 
-      {
-         Serial.print(x);
-      }
+      Serial.print(pixels[i-1]);
       Serial.print(", ");
       if( i%8 == 0 ) Serial.println();
     }
     Serial.println("]");
     Serial.println();
 }
+
 float getCompass() 
 {
 unsigned char high_byte, low_byte, angle8;
@@ -170,7 +206,7 @@ float heading;
  return heading;
  
 }
-void motorMove(char motor,int dir,int speedmotor,int delayTime) 
+void motorMove(char motor,int dir,int speedmotor) 
 // motor = L (Left) or R (Right) 
 // dir   = 1 for Maju , 0 for mundur 
 // speedmotor = range input 0-100
@@ -231,9 +267,7 @@ void motorMove(char motor,int dir,int speedmotor,int delayTime)
         digitalWrite(in4, LOW);
     }
   }
-    Serial.print(" delay : ");
-  Serial.println(delayTime);
-  delay(delayTime);
+Serial.println();
 }
 
 
@@ -280,6 +314,8 @@ void setup() {
   pinMode(enA, OUTPUT);
   pinMode(enB, OUTPUT);
   pinMode(in1, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
   pinMode(in2, OUTPUT);
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
@@ -299,16 +335,33 @@ void setup() {
 
 //Button activation
 int buttonState=0;
-
-while (buttonState!=1)
+Serial.println("Robot Start");
+/*while (buttonState==0)
 {
   buttonState=digitalRead(button);
-}
+ // Serial.println("button : OFF ");
+}*/
 Serial.println("Robot activated");
+
+//Start AMG
+//amg.begin();
+
 }
 
 
 void loop() 
 {
+  Serial.println("initiate");
+getPing();
+delay(1000);
+  motorMove('R',3,80);
+  motorMove('L',3,80);
+delay(1000);
+motorMove('R',0,80);
+  motorMove('L',0,80);
+delay(1000);
 
+  motorMove('R',3,80);
+  motorMove('L',3,80);
+delay(1000);
 }
