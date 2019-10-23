@@ -17,19 +17,19 @@ Servo propeller;
 #define CMPS11_ADDRESS 0x60  // Address of CMPS11 shifted right one bit for arduino wire library
 #define ANGLE_8  1           // Register to read 8bit angle from
 
-#define enA 3
-#define in1 12
-#define in2 13
-#define enB 5
-#define in3 4
-#define in4 7
+#define enA 3 // biru
+#define in1 12 // ijo
+#define in2 13 //kuning
+#define enB 5 // oren
+#define in3 4//merah
+#define in4 7 //coklat
 byte motorSpeedA = 0;
 byte motorSpeedB = 0;
 
 #define UVpin A4
 
 
-#define button 11
+#define button 0
 
 //int Pingpin[8]=[A1,A2,A3,A4,A5,8,10,11];
 //Pin ping (asumsi 6 ) 
@@ -60,10 +60,10 @@ int buttonState;
 // Var getUV()
 int sensorValue = 0;  // Variabel Penyimpan Input UVTron
 int sensorYES = 400;  // Batas atas 
-int sensorNO = 10;  // Batas bawah 
+int sensorNO = 300;  // Batas bawah 
 int adaApi = 0; // 0 = tidak ada api, 1 = ada api,(0,1) = ada bayangan
 int numRead = 0; // 
-int Max_numRead = 10; //
+int Max_numRead = 5; //
 
 // Var getAMG()
 bool status_amg;
@@ -97,7 +97,7 @@ void getAMG();
  * Output nya langsung di array float pixels 
  */
  
-void getUV();
+int getUV();
 /*
  * Output True or False , Algoritma fungsinya masih belom 100% jalan, nanti diganti .
  */
@@ -132,8 +132,8 @@ void getPing()
   
 }
 
-void getUV()
-{
+int getUV()
+ {
    // read the value from the sensor:
   sensorValue = analogRead(UVpin);
   if (sensorValue > sensorYES) {
@@ -148,11 +148,24 @@ void getUV()
         adaApi = 0;
       }
     }
-  //Serial.println(sensorValue);
-  Serial.print("adaApi : ");
-  Serial.println(adaApi);
+
+  return adaApi; 
   delay(10);
   
+}
+int UVdetect()
+{
+    int count=0;
+int state=0;
+for (int i=1 ; i<10;i++)
+{
+//Serial.println(getUV());
+if ( getUV())
+{
+  state=1;
+}
+}
+return state;
 }
 
 void getAMG()
@@ -263,8 +276,8 @@ void motorMove(char motor,int dir,int speedmotor)
     else
     {
               Serial.print("STOP");
-        digitalWrite(in3, LOW);
-        digitalWrite(in4, LOW);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, HIGH);
     }
   }
 Serial.println();
@@ -334,34 +347,49 @@ void setup() {
   propeller.writeMicroseconds(0);
 
 //Button activation
-int buttonState=0;
+int buttonState=1;
 Serial.println("Robot Start");
-/*while (buttonState==0)
+while (buttonState==1)
 {
   buttonState=digitalRead(button);
  // Serial.println("button : OFF ");
-}*/
+}
 Serial.println("Robot activated");
 
 //Start AMG
 //amg.begin();
 
 }
-
+void runs()
+{
+    //motorMove('R',0,80);
+  motorMove('R',0,50);
+motorMove('L', 0,50);
+delay(4000);
+motorMove('L', 3,50);
+motorMove('R', 3,50);
+delay(500);
+motorMove('R',1,50);
+motorMove('L',1,50);
+delay(4000);
+motorMove('L', 3,50);
+motorMove('R', 3,50);
+delay(500);
+}
 
 void loop() 
 {
-  Serial.println("initiate");
+  getPing();
+  runs();
+/*
+Serial.println(UVdetect());
+if(UVdetect())
+{
+  fanOut(100,1,3500);
 getPing();
-delay(1000);
-  motorMove('R',3,80);
-  motorMove('L',3,80);
-delay(1000);
-motorMove('R',0,80);
-  motorMove('L',0,80);
-delay(1000);
-
-  motorMove('R',3,80);
-  motorMove('L',3,80);
-delay(1000);
+//runs();
+fanOut(80,0,0);
+delay(2000);
+}
+delay(100);*/
 }
