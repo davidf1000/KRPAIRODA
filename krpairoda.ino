@@ -5,7 +5,7 @@
 #include <Servo.h>
 #include <Wire.h>;
 //AMG set up
-#include <Adafruit_AMG88xx.h>
+#include <Adafruit_AMG88xx.h> 
 Adafruit_AMG88xx amg;
 float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
 
@@ -377,10 +377,26 @@ motorMove('R', 3,50);
 delay(500);
 }
 
+void rotat()
+{
+  motorMove('R',1,50);
+motorMove('L', 0,50);
+delay(650);
+motorMove('L', 3,50);
+motorMove('R', 3,50);
+delay(500);
+}
 void loop() 
 {
-  getPing();
-  runs();
+ // getPing();
+fanOut(100,1,3500);
+getPing();
+//runs();
+fanOut(80,0,0);
+delay(2000);
+  //rotat();
+  delay(3000);
+ // runs();
 /*
 Serial.println(UVdetect());
 if(UVdetect())
